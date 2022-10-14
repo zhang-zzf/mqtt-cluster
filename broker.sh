@@ -5,18 +5,36 @@ workdir=$(cd $(dirname $0); pwd)
 
 _buildVmOptions() {
     serverIp=${1}
+    hugePage=${2}
     opt="-server "
     # heapSize
     read -p "Enter the heap size for broker @${serverIp}[default 16g]: " heapSize
     heapSize=${heapSize:-16g}
-    opt="${opt} -Xmx${heapSize}"
-    read -p "Enter the thread.num for broker @${serverIp}[128]: " threadNum
-    threadNum=${threadNum:-128}
+    opt="${opt} -Xms${heapSize} -Xmx${heapSize}"
+    read -p "Enter the thread.num for broker @${serverIp}[64]: " threadNum
+    threadNum=${threadNum:-64}
     opt="${opt} -Dmqtt.server.thread.num=${threadNum}"
     # jdk17
     opt="${opt} --add-opens java.base/java.nio=ALL-UNNAMED"
     # gc
     opt="${opt} -XX:+UseZGC \"-Xlog:safepoint,classhisto*=trace,age*,gc*=info:file=./gc-%p-%t.log:time,tid,tags:filecount=8,filesize=64m\""
+    read -p "Enter the gc.ZAllocationSpikeTolerance: " zast
+    if [ "${zast}" != "" ]; then
+        opt="${opt} -XX:ZAllocationSpikeTolerance=${zast}"
+    fi
+    read -p "Enter the gc.thread.num: " gcThreadNum
+    if [ "${gcThreadNum}" != "" ]; then
+        opt="${opt} -XX:ConcGCThreads=${gcThreadNum}"
+    fi
+    # zgc 主动 GC 时间间隔
+    read -p "Enter the gc.interval.seconds: " gcInterval
+    if [ "${gcInterval}" != "" ]; then
+        opt="${opt} -XX:ZCollectionInterval=${gcInterval}"
+    fi
+    # JVM hugepage
+    if [ "${hugePage}" != "" ]; then
+        opt="${opt} -XX:+UseLargePages"
+    fi
     # broker cluster config
     opt="${opt} -Dspring.enable=true -Dmqtt.server.cluster.enable=true"
     # node name
@@ -53,17 +71,27 @@ _start() {
         username=${username:-admin}
         read -p "Enter the password for ssh @${ip}[default 0.]: " password
         password=${password:-0.}
+        read -p "Linux Huge Pages size[18G=9216]: " hugePageSize
         # JVM 参数
-        vmOptiions="$(_buildVmOptions ${ip})"
+        vmOptiions="$(_buildVmOptions ${ip} ${hugePageSize})"
         # broker 依赖的 redis url
         vmOptiions="${vmOptiions} -Dmqtt.server.cluster.db.redis.url=${redisUrl}"
         echo "jvm options: ${vmOptiions}"
-        read -p "continue? yes/[no]: " jvmOk
-        if [ "${jvmOk}" != "yes" ]; then
+        read -p "continue? [Y/n]: " jvmOk
+        jvmOk=${jvmOk:-y}
+        # 把变量中的第一个字符换成小写
+        if [ "${jvmOk,}" != "y" ]; then
             echo "jvm options is not ok, please reenter it"
             continue
         fi
         echo "${password}"|ssh -tt -p ${port} ${username}@${ip} "sudo pkill java"
+        if [ "${hugePageSize}" != "" ]; then
+            echo "enable Linux Huge Pages: ${hugePageSize}"
+            echo "${password}"|ssh -tt -p ${port} ${username}@${ip} \
+                "sudo bash -c \"echo ${hugePageSize} > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages\""
+            echo "Now check after change Linux Huge Pages "
+            ssh -p ${port} ${username}@${ip} "cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
+        fi
         ssh -p ${port} ${username}@${ip} "sleep 3s"
         # start the broker
         ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
