@@ -8,8 +8,8 @@ _buildVmOptions() {
     hugePage=${2}
     opt="-server "
     # heapSize
-    read -p "Enter the heap size for broker @${serverIp}[default 16g]: " heapSize
-    heapSize=${heapSize:-16g}
+    read -p "Enter the heap size for broker @${serverIp}[default 32g]: " heapSize
+    heapSize=${heapSize:-32g}
     opt="${opt} -Xms${heapSize} -Xmx${heapSize}"
     read -p "Enter the thread.num for broker @${serverIp}[64]: " threadNum
     threadNum=${threadNum:-64}
@@ -35,19 +35,35 @@ _buildVmOptions() {
     if [ "${hugePage}" != "" ]; then
         opt="${opt} -XX:+UseLargePages"
     fi
-    # broker cluster config
-    opt="${opt} -Dspring.enable=true -Dmqtt.server.cluster.enable=true"
-    # node name
-    read -p "Enter the node name for broker @${serverIp}[default ${serverIp}]: " nodeName
-    nodeName=${nodeName:-${serverIp}}
-    opt="${opt} -Dmqtt.server.cluster.nodeName=${nodeName}"
+    # appName (most for metric usage)
+    read -p "Enter the appName: " appName
+    if [ "${appName}" != "" ]; then
+        opt="${opt} -DappName=${appName}"
+    fi
+    # listened addresses
     read -p "Enter the listened addresses for broker @${serverIp}[default mqtt://${serverIp}:1883]: " listened
     listened=${listened:-mqtt://${serverIp}:1883}
     opt="${opt} -Dmqtt.server.listened=${listened}"
-    # join the cluster
-    read -p "Enter the cluster that broker @${serverIp} to join[Format mqtt://ip:port]: " toJoin
-    if [ "${toJoin}" != "" ]; then
-        opt="${opt} -Dmqtt.server.cluster.join=${toJoin}"
+    # start spring context
+    read -p "enable spring context[Y/n]: " spCtx
+    spCtx=${spCtx:-y}
+    if [ "${spCtx,}" == "y" ]; then
+        opt="${opt} -Dspring.enable=true"
+    fi
+    # broker cluster config
+    read -p "enable cluster mode[Y/n]: " cluster
+    cluster=${cluster:-y}
+    if [ "${cluster,}" == "y" ]; then
+        opt="${opt} -Dmqtt.server.cluster.enable=true"
+        # node name
+        read -p "Enter the node name for broker @${serverIp}[default ${serverIp}]: " nodeName
+        nodeName=${nodeName:-${serverIp}}
+        opt="${opt} -Dmqtt.server.cluster.nodeName=${nodeName}"
+        # join the cluster
+        read -p "Enter the cluster that broker @${serverIp} to join[Format mqtt://ip:port]: " toJoin
+        if [ "${toJoin}" != "" ]; then
+            opt="${opt} -Dmqtt.server.cluster.join=${toJoin}"
+        fi
     fi
     # prometheus jvm exporter
     opt="${opt} -Dprometheus.export.address=${serverIp}:0"
@@ -71,7 +87,8 @@ _start() {
         username=${username:-admin}
         read -p "Enter the password for ssh @${ip}[default 0.]: " password
         password=${password:-0.}
-        read -p "Linux Huge Pages size[18G=9216]: " hugePageSize
+        read -p "Linux Huge Pages size[18G=9216,36G=[18432]]: " hugePageSize
+        hugePageSize=${hugePageSize:-18432}
         # JVM 参数
         vmOptiions="$(_buildVmOptions ${ip} ${hugePageSize})"
         # broker 依赖的 redis url
