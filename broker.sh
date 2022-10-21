@@ -11,17 +11,16 @@ _buildVmOptions() {
     read -p "Enter the heap size for broker @${serverIp}[default 32g]: " heapSize
     heapSize=${heapSize:-32g}
     opt="${opt} -Xms${heapSize} -Xmx${heapSize}"
-    read -p "Enter the thread.num for broker @${serverIp}[64]: " threadNum
-    threadNum=${threadNum:-64}
+    read -p "Enter the thread.num for broker @${serverIp}[32 for 4W TPS]: " threadNum
+    threadNum=${threadNum:-32}
     opt="${opt} -Dmqtt.server.thread.num=${threadNum}"
     # jdk17
     opt="${opt} --add-opens java.base/java.nio=ALL-UNNAMED"
     # gc
     opt="${opt} -XX:+UseZGC \"-Xlog:safepoint,classhisto*=trace,age*,gc*=info:file=./gc-%p-%t.log:time,tid,tags:filecount=8,filesize=64m\""
-    read -p "Enter the gc.ZAllocationSpikeTolerance: " zast
-    if [ "${zast}" != "" ]; then
-        opt="${opt} -XX:ZAllocationSpikeTolerance=${zast}"
-    fi
+    read -p "Enter the gc.ZAllocationSpikeTolerance[5]: " zast
+    zast=${zast:-5}
+    opt="${opt} -XX:ZAllocationSpikeTolerance=${zast}"
     read -p "Enter the gc.thread.num: " gcThreadNum
     if [ "${gcThreadNum}" != "" ]; then
         opt="${opt} -XX:ConcGCThreads=${gcThreadNum}"
@@ -64,6 +63,10 @@ _buildVmOptions() {
         if [ "${toJoin}" != "" ]; then
             opt="${opt} -Dmqtt.server.cluster.join=${toJoin}"
         fi
+        # node name
+        read -p "Enter the channel.num[32 for 16C]: " channels
+        channels=${channels:-32}
+        opt="${opt} -Dmqtt.server.cluster.node.channel.num=${channels}"
     fi
     # prometheus jvm exporter
     opt="${opt} -Dprometheus.export.address=${serverIp}:0"
