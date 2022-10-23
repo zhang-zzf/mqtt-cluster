@@ -125,6 +125,9 @@ init_env)
 init_env_batch)
     shift;_init_env_batch $@
 ;;
+source)
+  # just for source by other script
+;;
 *)
     echo "Usage: ${0} init/start"
 ;;
