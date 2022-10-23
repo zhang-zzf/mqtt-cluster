@@ -93,10 +93,10 @@ _start() {
         read -p "Linux Huge Pages size[18G=9216,36G=[18432]]: " hugePageSize
         hugePageSize=${hugePageSize:-18432}
         # JVM 参数
-        vmOptiions="$(_buildVmOptions ${ip} ${hugePageSize})"
+        vmOptions="$(_buildVmOptions ${ip} ${hugePageSize})"
         # broker 依赖的 redis url
-        vmOptiions="${vmOptiions} -Dmqtt.server.cluster.db.redis.url=${redisUrl}"
-        echo "jvm options: ${vmOptiions}"
+        vmOptions="${vmOptions} -Dmqtt.server.cluster.db.redis.url=${redisUrl}"
+        echo "jvm options: ${vmOptions}"
         read -p "continue? [Y/n]: " jvmOk
         jvmOk=${jvmOk:-y}
         # 把变量中的第一个字符换成小写
@@ -115,9 +115,62 @@ _start() {
         ssh -p ${port} ${username}@${ip} "sleep 3s"
         # start the broker
         ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
-            ulimit -n 10280000; nohup broker/jdk/default/bin/java ${vmOptiions} \
+            ulimit -n 10280000; nohup broker/jdk/default/bin/java ${vmOptions} \
             -jar broker/mqtt.jar ${programArgs} &>/dev/null &"
     done
+}
+
+# gatewayIp serverIp heapSize hugePageSize cluster
+# 192.168.0.1 192.168.1.1 32g 18432 mqtt://ip:port
+_init_start() {
+  cd ${workdir}
+  gatewayIp=${1}
+  ip=${2}
+  heapSize=${3}
+  # 9G=4608,18G=9216,36G=[18432]
+  hugePageSize=${4}
+  port=22
+  # 修改 username 需慎重
+  username="root"
+  password="Root0.0."
+  source ./cluster.sh source
+  _init_vm_func ${username} ${password} ${ip} ${port}
+  _init_env_func ${gatewayIp} ${username} ${password} ${ip} ${port}
+  # hugePage
+  echo "enable Linux Huge Pages: ${hugePageSize}"
+  echo "${password}"|ssh -tt -p ${port} ${username}@${ip} \
+      "sudo bash -c \"echo ${hugePageSize} > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages\""
+  echo "Now check after change Linux Huge Pages "
+  ssh -p ${port} ${username}@${ip} "cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
+  # jvm_opt
+  # for 32CPU
+  threadNum=64
+  opt="-server "
+  # heapSize
+  opt="${opt} -Xms${heapSize} -Xmx${heapSize}"
+  opt="${opt} -Dmqtt.server.thread.num=${threadNum}"
+  # jdk17
+  opt="${opt} --add-opens java.base/java.nio=ALL-UNNAMED"
+  # gc
+  opt="${opt} -XX:+UseZGC \"-Xlog:safepoint,classhisto*=trace,age*,gc*=info:file=./gc-%p-%t.log:time,tid,tags:filecount=8,filesize=64m\""
+  opt="${opt} -XX:ZAllocationSpikeTolerance=5"
+  opt="${opt} -XX:+UseLargePages"
+  opt="${opt} -Dmqtt.server.listened=mqtt://${ip}:1883"
+  # start spring context
+  opt="${opt} -Dspring.enable=true"
+  opt="${opt} -Dmqtt.server.cluster.enable=true"
+  opt="${opt} -Dmqtt.server.cluster.nodeName=${ip}"
+  if [ "${toJoin}" != "" ]; then
+      opt="${opt} -Dmqtt.server.cluster.join=${toJoin}"
+  fi
+  opt="${opt} -Dmqtt.server.cluster.node.channel.num=${threadNum}"
+  # prometheus jvm exporter
+  opt="${opt} -Dprometheus.export.address=${ip}:0"
+  echo "jvm_opt-> ${opt}"
+  # start the broker
+  ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
+      ulimit -n 10280000; nohup broker/jdk/default/bin/java ${opt} \
+      -jar broker/mqtt.jar &>/dev/null &"
 }
 
 case "$1" in
@@ -125,6 +178,11 @@ start)
     # ./broker.sh start redis://10.255.1.42:7000 mainArgs
     shift;_start $@
     echo "start done"
+;;
+init_start)
+    # ./broker.sh start redis://10.255.1.42:7000 mainArgs
+    shift;_init_start $@
+    echo "init_start done"
 ;;
 *)
     echo "Usage: ${0} init/start"
