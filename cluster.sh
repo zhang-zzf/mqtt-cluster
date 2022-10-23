@@ -91,6 +91,9 @@ _init_vm_func() {
     ip=${3}
     port=${4}
     noReboot=${5}
+    if [ "${username}" == "root" ]; then
+        noReboot="noReboot"
+    fi
     ssh-copy-id -p ${port} ${username}@${ip}
     # scp bin to remote node
     scp -P ${port} vm_init.sh ${username}@${ip}:
