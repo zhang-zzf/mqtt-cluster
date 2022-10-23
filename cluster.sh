@@ -52,14 +52,14 @@ _init_env_func() {
     ssh -n -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/consul 2>/dev/null;\
         pkill consul && sleep 8s; \
         cd ~/broker_cluster/consul && rm -rf data; \
-        nohup ../broker/consul agent -bind=${ip} -data-dir=./data -retry-join=${localIp} &>./nohup.out &; \
+        nohup ../broker/consul agent -bind=${ip} -data-dir=./data -retry-join=${localIp} &>./nohup.out & \
         "
     # start node-exporter
-    ssh -n -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/node_exporter 2>/dev/null;\
-        pkill -9 node_exporter; sleep 1s;\
-        cd ~/broker_cluster/node_exporter && \
-        nohup ../broker/node_exporter &>./nohup.out & ;\
-        curl -X PUT http://127.0.0.1:8500/v1/agent/service/register \
+    ssh -n -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/node_exporter 2>/dev/null ; \
+        pkill -9 node_exporter && sleep 3s ; \
+        cd ~/broker_cluster/node_exporter ; nohup ../broker/node_exporter &>./nohup.out & \
+        "
+    ssh -n -p ${port} ${username}@${ip} "curl -X PUT http://127.0.0.1:8500/v1/agent/service/register \
         -d '{\"Name\":\"node-exporter\", \"Address\":\"${ip}\", \"Port\":9100}' \
         "
     #
@@ -90,10 +90,11 @@ _init_vm_func() {
     password=${2}
     ip=${3}
     port=${4}
+    noReboot=${5}
     ssh-copy-id -p ${port} ${username}@${ip}
     # scp bin to remote node
     scp -P ${port} vm_init.sh ${username}@${ip}:
-    ssh -n -p ${port} ${username}@${ip} "echo ${password}|sudo -S sh ~/vm_init.sh ${username}"
+    ssh -n -p ${port} ${username}@${ip} "echo ${password}|sudo -S bash ~/vm_init.sh ${username} ${noReboot}"
     echo "init_vm done-> ${ip}"
     return 0
 }

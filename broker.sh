@@ -115,7 +115,7 @@ _start() {
         ssh -p ${port} ${username}@${ip} "sleep 3s"
         # start the broker
         ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
-            nohup broker/jdk/default/bin/java ${vmOptiions} \
+            ulimit -n 10280000; nohup broker/jdk/default/bin/java ${vmOptiions} \
             -jar broker/mqtt.jar ${programArgs} &>/dev/null &"
     done
 }
