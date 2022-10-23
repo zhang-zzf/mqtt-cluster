@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-workdir=$(cd $(dirname $0); pwd)
+workdir=$(
+  cd $(dirname $0)
+  pwd
+)
 
 # 主机存在
 # 判断是否存在 JAVA 进程
@@ -42,8 +45,8 @@ for ((i = 1; i < 253; i++)); do
   existHost=$?
   echo "ping ${ip} resp: ${existHost}"
   if [ ${existHost} == 0 ]; then
-{
-expect <<EOF
+    {
+      expect <<EOF
 spawn ssh-copy-id -p ${sshPort} ${username}@${ip}
 expect {
   "yes/no" { send "yes\n";exp_continue }
@@ -51,9 +54,9 @@ expect {
 }
 expect eof
 EOF
-}&
-#等待完成
-wait
+    } &
+    #等待完成
+    wait
     # 主机存在
     # 判断 Java 进程是否存在
     processCnt=$(ssh -p ${sshPort} ${username}@${ip} "ps -ef|grep java|wc -l")
