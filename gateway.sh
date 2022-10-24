@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+workdir=$(
+  cd $(dirname $0)
+  pwd
+)
+
+# install docker
+sudo apt-get remove docker docker-engine docker.io containerd runc
+sudo apt-get install expect   ca-certificates   curl  gnupg lsb-release
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo docker run hello-world
+
+
+# nfs-server
+# use root
+sudo apt install nfs-kernel-server
+sudo systemctl start nfs-kernel-server.service
+echo "/home/${USER}/broker_cluster/broker *(ro,sync,subtree_check)" | sudo tee -a /etc/exports
+sudo exportfs -a
+
+cd ${workdir}
+git clone https://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@github.com/zhang-zzf/middle-dotfiles
+
+# docker-prometheus
+git clone https://github.com/zhang-zzf/docker-prometheus
+cd docker-prometheus
+docker compose up -d
+
