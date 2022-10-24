@@ -27,19 +27,23 @@ _startJvm() {
 }
 
 source ./cluster.sh source
-# 192.168.0.1 mqtt://10.255.1.14:1883 192.168.1.0 160 force
+# 192.168.0.1 mqtt://192.168.0.11 192.168.1 1 253 160 force
 # 192.168.1.0
 gatewayIp=${1}
 serverAddress=${2}
 subweb=${3}
-force=${4}
+startIp=${4}
+endIp=${5}
+needClient=${6}
+force=${7}
 # username
 username="root"
 password="Root0.0."
 sshPort=22
 # aliyun 每个交换机网段的第1个和最后3个IP地址为系统保留地址。
 # 以192.168.1.0/24为例，192.168.1.0、192.168.1.253、192.168.1.254和192.168.1.255这些地址是系统保留地址
-for ((i = 1; i < 253; i++)); do
+startNum=0
+for ((i = startIp; i < endIp; i++)); do
   ip="${subweb}.${i}"
   ping ${ip} -c 1 -W 1 -n -4 -q &>/dev/null
   existHost=$?
@@ -70,6 +74,11 @@ EOF
       ssh -p ${sshPort} ${username}@${ip} "echo ${password}|sudo -S pkill java && sleep 10s"
       # 启动 java 进程
       _startJvm
+    fi
+    ((startNum = startNum + 1))
+    echo "start client num-> ${startNum}"
+    if [ ${startNum} -ge ${needClient} ];then
+      return
     fi
   fi
 done
