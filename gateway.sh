@@ -23,7 +23,7 @@ sudo docker run hello-world
 sudo apt install nfs-kernel-server -y
 sudo systemctl start nfs-kernel-server.service
 mkdir "${workdir}/broker"
-if [ $(grep -c "${workdir}/broker *(ro,sync,subtree_check)" /etc/exports) -eq 0 ];then
+if [ $(grep -c "${workdir}/broker" /etc/exports) -eq 0 ]; then
   echo "${workdir}/broker *(ro,sync,subtree_check)" | sudo tee -a /etc/exports
 fi
 sudo exportfs -a
