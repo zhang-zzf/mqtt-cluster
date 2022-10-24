@@ -16,7 +16,8 @@ workdir=$(
 _startJvm() {
   # 启动 java 进程
   vmoptions=" -server \
-              -Xmx384m \
+              -Xmx512m \
+              -XX:+UseZGC \
               -Dmqtt.client.mode=true \
               -Dprometheus.export.address=${ip}:0 \
               -Dmqtt.client.thread.num=8  -Dclient.startup.sleep=0"
@@ -77,8 +78,8 @@ EOF
     fi
     ((startNum = startNum + 1))
     echo "start client num-> ${startNum}"
-    if [ ${startNum} -ge ${needClient} ];then
-      return
+    if [ ${startNum} -ge ${needClient} ]; then
+      break
     fi
   fi
 done
