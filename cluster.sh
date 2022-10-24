@@ -42,6 +42,19 @@ _init_env_func() {
   password=${3}
   ip=${4}
   port=${5}
+# ssh-copy-id
+  {
+    expect <<EOF
+spawn ssh-copy-id -p ${port} ${username}@${ip}
+expect {
+  "yes/no" { send "yes\n";exp_continue }
+  "password" { send "${password}\n" }
+}
+expect eof
+EOF
+  } &
+  #等待完成
+  wait
 
   # mount broker_cluster/broker
   ssh -n -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/broker"

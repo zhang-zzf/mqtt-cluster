@@ -124,14 +124,17 @@ _start() {
 }
 
 # gatewayIp serverIp cluster
-# 192.168.0.1 192.168.1.1 mqtt://ip:port
+# 192.168.0.1 192.168.1.1 redis://10.255.1.43
 _init_start() {
   cd ${workdir}
   gatewayIp=${1}
   ip=${2}
-  heapSize=64g
+  redisUrl=${3}
+  heapSize=32g
   # 9G=4608,18G=9216,36G=[18432]
   hugePageSize=18432
+  # for 32CPU
+  threadNum=64
   port=22
   # 修改 username 需慎重
   username="root"
@@ -146,8 +149,6 @@ _init_start() {
   echo "Now check after change Linux Huge Pages "
   ssh -p ${port} ${username}@${ip} "cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
   # jvm_opt
-  # for 32CPU
-  threadNum=64
   opt="-server "
   # heapSize
   opt="${opt} -Xms${heapSize} -Xmx${heapSize}"
@@ -169,6 +170,7 @@ _init_start() {
   opt="${opt} -Dmqtt.server.cluster.node.channel.num=${threadNum}"
   # prometheus jvm exporter
   opt="${opt} -Dprometheus.export.address=${ip}:0"
+  opt="${opt} -Dmqtt.server.cluster.db.redis.url=${redisUrl}"
   echo "jvm_opt-> ${opt}"
   # start the broker
   ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
