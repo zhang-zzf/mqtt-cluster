@@ -24,7 +24,7 @@ sudo apt install nfs-kernel-server -y
 sudo systemctl start nfs-kernel-server.service
 mkdir "${workdir}/broker"
 if [ $(grep -c "${workdir}/broker" /etc/exports) -eq 0 ]; then
-  echo "${workdir}/broker *(ro,sync,subtree_check)" | sudo tee -a /etc/exports
+  echo "${workdir}/broker *(ro,sync,subtree_check,no_root_squash)" | sudo tee -a /etc/exports
 fi
 sudo exportfs -a
 
