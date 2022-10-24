@@ -63,7 +63,7 @@ EOF
         sudo -S apt install nfs-common -y \
         "
   ssh -n -p ${port} ${username}@${ip} "echo ${password}|\
-        sudo -S mount ${localIp}:/home/admin/broker_cluster/broker ~/broker_cluster/broker &>/dev/null"
+        sudo -S mount ${localIp}:/root/broker_cluster/broker ~/broker_cluster/broker "
   # start consul
   ssh -n -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/consul 2>/dev/null;\
         pkill consul && sleep 8s; \

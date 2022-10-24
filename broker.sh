@@ -89,10 +89,10 @@ _start() {
     fi
     read -p "Enter the port for ssh @${ip}[default 22]: " port
     port=${port:-22}
-    read -p "Enter the username for ssh @${ip}[default admin]: " username
-    username=${username:-admin}
-    read -p "Enter the password for ssh @${ip}[default 0.]: " password
-    password=${password:-0.}
+    read -p "Enter the username for ssh @${ip}[default root]: " username
+    username=${username:-root}
+    read -p "Enter the password for ssh @${ip}[default Root0.0.]: " password
+    password=${password:-Root0.0.}
     read -p "Linux Huge Pages size[18G=9216,36G=[18432]]: " hugePageSize
     hugePageSize=${hugePageSize:-18432}
     # JVM 参数
@@ -119,7 +119,7 @@ _start() {
     # start the broker
     ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
             ulimit -n 10280000; nohup broker/jdk/default/bin/java ${vmOptions} \
-            -jar broker/mqtt.jar ${programArgs} &>/dev/null &"
+            -jar broker/mqtt.jar ${programArgs} >/dev/null 2>&1 & "
   done
 }
 
