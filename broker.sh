@@ -163,7 +163,7 @@ _start_test() {
   ssh -p ${port} ${username}@${ip} "rm -rf ${dir} &>/dev/null; mkdir -p ${dir} &>/dev/null; \
    cd ${dir} && \
       nohup ~/broker_cluster/broker/jdk/default/bin/java ${opt} \
-      -jar ~/broker_cluster/broker/mqtt.jar &>/dev/null &"
+      -jar ~/broker_cluster/broker/mqtt.jar &"
 }
 
 # gatewayIp serverIp cluster
