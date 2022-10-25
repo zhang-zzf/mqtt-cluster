@@ -161,8 +161,8 @@ _start_test() {
   # start the broker
   ssh -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/${listened} &>/dev/null \
    cd ~/broker_cluster/${listened} && \
-      nohup ../broker/jdk/default/bin/java ${opt} \
-      -jar ../broker/mqtt.jar &>/dev/null &"
+      nohup ~/broker_cluster/broker/jdk/default/bin/java ${opt} \
+      -ja ~/broker_cluster/broker/mqtt.jar &>/dev/null &"
 }
 
 # gatewayIp serverIp cluster
