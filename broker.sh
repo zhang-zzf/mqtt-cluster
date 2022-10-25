@@ -159,8 +159,9 @@ _start_test() {
   echo "jvm_opt-> ${opt}"
   echo "${password}" | ssh -tt -p ${port} ${username}@${ip} "sudo pkill -f mqtt://${ip}:${listened} && sleep 3s"
   # start the broker
-  ssh -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/${listened} &>/dev/null; \
-   cd ~/broker_cluster/${listened} && \
+  dir="~/broker_cluster/${listened}"
+  ssh -p ${port} ${username}@${ip} "rm -rf ${dir} &>/dev/null; mkdir -p ${dir} &>/dev/null; \
+   cd ${dir} && \
       nohup ~/broker_cluster/broker/jdk/default/bin/java ${opt} \
       -jar ~/broker_cluster/broker/mqtt.jar &>/dev/null &"
 }
