@@ -124,6 +124,45 @@ _start() {
 }
 
 # gatewayIp serverIp cluster
+# 192.168.1.1
+_start_test() {
+  cd ${workdir}
+  ip=${1}
+  heapSize=512M
+  threadNum=4
+  port=22
+  # 修改 username 需慎重
+  username="admin"
+  password="0."
+  # jvm_opt
+  opt="-server "
+  # heapSize
+  opt="${opt} -Xms${heapSize} -Xmx${heapSize}"
+  opt="${opt} -Dmqtt.server.thread.num=${threadNum}"
+  # jdk17
+  opt="${opt} --add-opens java.base/java.nio=ALL-UNNAMED"
+  # gc
+  opt="${opt} -XX:+UseZGC"
+  opt="${opt} -Dmqtt.server.listened=mqtt://${ip}:1883"
+  # start spring context
+  opt="${opt} -Dspring.enable=true"
+  opt="${opt} -Dmqtt.server.cluster.enable=true"
+  opt="${opt} -Dmqtt.server.cluster.nodeName=${ip}"
+  if [ "${toJoin}" != "" ]; then
+    opt="${opt} -Dmqtt.server.cluster.join=${toJoin}"
+  fi
+  opt="${opt} -Dmqtt.server.cluster.node.channel.num=${threadNum}"
+  # prometheus jvm exporter
+  opt="${opt} -Dprometheus.export.address=${ip}:0"
+  echo "jvm_opt-> ${opt}"
+  echo "${password}" | ssh -tt -p ${port} ${username}@${ip} "sudo pkill java"
+  # start the broker
+  ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
+      nohup broker/jdk/default/bin/java ${opt} \
+      -jar broker/mqtt.jar &>/dev/null &"
+}
+
+# gatewayIp serverIp cluster
 # 192.168.0.1 192.168.1.1 redis://10.255.1.43
 _init_start() {
   cd ${workdir}
@@ -190,6 +229,12 @@ init_start)
   shift
   _init_start $@
   echo "init_start done"
+  ;;
+start_test)
+  # ./broker.sh start redis://10.255.1.42:7000 mainArgs
+  shift
+  _start_test $@
+  echo "init_test done"
   ;;
 *)
   echo "Usage: ${0} init/start"
