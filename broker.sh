@@ -149,8 +149,8 @@ _start_test() {
   # start spring context
   opt="${opt} -Dspring.enable=true"
   opt="${opt} -Dmqtt.server.cluster.enable=true"
-  opt="${opt} -Dmqtt.server.cluster.nodeName=${ip}"
-  if [ "${toJoin}" != "" ]; then
+  opt="${opt} -Dmqtt.server.cluster.nodeName=${ip}:${listened}"
+  if [ "${toJoin}" != "mqtt" ]; then
     opt="${opt} -Dmqtt.server.cluster.join=${toJoin}"
   fi
   opt="${opt} -Dmqtt.server.cluster.node.channel.num=${threadNum}"
