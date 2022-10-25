@@ -124,11 +124,13 @@ _start() {
 }
 
 # gatewayIp serverIp cluster
-# 192.168.1.1
+# mqtt://192.168.0.1:1883 192.168.1.1 1883
 _start_test() {
   cd ${workdir}
-  ip=${1}
-  heapSize=512M
+  toJoin=${1}
+  ip=${2}
+  listened=${3}
+  heapSize="512M"
   threadNum=4
   port=22
   # 修改 username 需慎重
@@ -143,7 +145,7 @@ _start_test() {
   opt="${opt} --add-opens java.base/java.nio=ALL-UNNAMED"
   # gc
   opt="${opt} -XX:+UseZGC"
-  opt="${opt} -Dmqtt.server.listened=mqtt://${ip}:1883"
+  opt="${opt} -Dmqtt.server.listened=mqtt://${ip}:${listened}"
   # start spring context
   opt="${opt} -Dspring.enable=true"
   opt="${opt} -Dmqtt.server.cluster.enable=true"
@@ -157,9 +159,10 @@ _start_test() {
   echo "jvm_opt-> ${opt}"
   echo "${password}" | ssh -tt -p ${port} ${username}@${ip} "sudo pkill java && sleep 3s"
   # start the broker
-  ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
-      nohup broker/jdk/default/bin/java ${opt} \
-      -jar broker/mqtt.jar &>/dev/null &"
+  ssh -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/${listened} &>/dev/null \
+   cd ~/broker_cluster/${listened} && \
+      nohup ../broker/jdk/default/bin/java ${opt} \
+      -jar ../broker/mqtt.jar &>/dev/null &"
 }
 
 # gatewayIp serverIp cluster
