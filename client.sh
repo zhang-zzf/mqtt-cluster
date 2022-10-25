@@ -65,6 +65,15 @@ EOF
     # 主机存在
     # 判断 Java 进程是否存在
     processCnt=$(ssh -p ${sshPort} ${username}@${ip} "ps -ef|grep java|wc -l")
+    if [ ${startNum} -ge ${needClient} ]; then
+      if [ ${processCnt} -ge 3 ]; then
+        # kill java 进程
+        echo "kill JVM in VM-> ${ip}"
+        ssh -p ${sshPort} ${username}@${ip} "echo ${password}|sudo -S pkill java && sleep 10s"
+      fi
+      # 继续，遍历 IP 池中的所有 IP
+      continue
+    fi
     if [ ${processCnt} -lt 3 ]; then
       # 不存在
       _init_vm_func ${username} ${password} ${ip} ${sshPort} noReboot
@@ -78,8 +87,6 @@ EOF
     fi
     ((startNum = startNum + 1))
     echo "start client num-> ${startNum}"
-    if [ ${startNum} -ge ${needClient} ]; then
-      break
-    fi
+    echo "cur IP-> ${ip}"
   fi
 done
