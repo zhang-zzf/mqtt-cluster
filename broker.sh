@@ -129,7 +129,7 @@ _start_test() {
   cd ${workdir}
   toJoin=${1}
   ip=${2}
-  listened=${3}
+  mqttListened="mqtt://${ip}:${3}"
   heapSize="512M"
   threadNum=4
   port=22
@@ -145,7 +145,7 @@ _start_test() {
   opt="${opt} --add-opens java.base/java.nio=ALL-UNNAMED"
   # gc
   opt="${opt} -XX:+UseZGC"
-  opt="${opt} -Dmqtt.server.listened=mqtt://${ip}:${listened}"
+  opt="${opt} -Dmqtt.server.listened=${mqttListened}"
   # start spring context
   opt="${opt} -Dspring.enable=true"
   opt="${opt} -Dmqtt.server.cluster.enable=true"
@@ -157,9 +157,9 @@ _start_test() {
   # prometheus jvm exporter
   opt="${opt} -Dprometheus.export.address=${ip}:0"
   echo "jvm_opt-> ${opt}"
-  echo "${password}" | ssh -tt -p ${port} ${username}@${ip} "\
-    sudo pkill -f mqtt.server.listened=mqtt://${ip}:${port} && sleep 3s && \
-    ps -ef|grep mqtt.server.listened=mqtt://${ip}:${port}"
+  ssh -p ${port} ${username}@${ip} "\
+    pkill -f mqtt.server.listened=${mqttListened} && sleep 3s && \
+    ps -ef|grep mqtt.server.listened=${mqttListened}"
   # start the broker
   dir="~/broker_cluster/${listened}"
   ssh -p ${port} ${username}@${ip} "mkdir -p ${dir} &>/dev/null; \
