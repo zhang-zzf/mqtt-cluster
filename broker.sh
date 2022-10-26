@@ -129,7 +129,8 @@ _start_test() {
   cd ${workdir}
   toJoin=${1}
   ip=${2}
-  mqttListened="mqtt://${ip}:${3}"
+  listened=${3}
+  mqttListened="mqtt://${ip}:${listened}"
   heapSize="512M"
   threadNum=4
   port=22
