@@ -157,10 +157,12 @@ _start_test() {
   # prometheus jvm exporter
   opt="${opt} -Dprometheus.export.address=${ip}:0"
   echo "jvm_opt-> ${opt}"
-  echo "${password}" | ssh -tt -p ${port} ${username}@${ip} "sudo pkill -f nodeName=mqtt://${ip}:${listened} && sleep 3s"
+  echo "${password}" | ssh -tt -p ${port} ${username}@${ip} "\
+    sudo pkill -f mqtt.server.listened=mqtt://${ip}:${port} && sleep 3s && \
+    ps -ef|grep mqtt.server.listened=mqtt://${ip}:${port}"
   # start the broker
   dir="~/broker_cluster/${listened}"
-  ssh -p ${port} ${username}@${ip} "rm -rf ${dir} &>/dev/null; mkdir -p ${dir} &>/dev/null; \
+  ssh -p ${port} ${username}@${ip} "mkdir -p ${dir} &>/dev/null; \
    cd ${dir} && \
       nohup ~/broker_cluster/broker/jdk/default/bin/java ${opt} \
       -jar ~/broker_cluster/broker/mqtt.jar &>nohup.out &"
