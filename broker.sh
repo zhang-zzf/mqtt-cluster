@@ -157,7 +157,7 @@ _start_test() {
   # prometheus jvm exporter
   opt="${opt} -Dprometheus.export.address=${ip}:0"
   echo "jvm_opt-> ${opt}"
-  echo "${password}" | ssh -tt -p ${port} ${username}@${ip} "sudo pkill -f mqtt://${ip}:${listened} && sleep 3s"
+  echo "${password}" | ssh -tt -p ${port} ${username}@${ip} "sudo pkill -f nodeName=mqtt://${ip}:${listened} && sleep 3s"
   # start the broker
   dir="~/broker_cluster/${listened}"
   ssh -p ${port} ${username}@${ip} "rm -rf ${dir} &>/dev/null; mkdir -p ${dir} &>/dev/null; \
