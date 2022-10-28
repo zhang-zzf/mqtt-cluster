@@ -169,6 +169,20 @@ _start_test() {
       -jar ~/broker_cluster/broker/mqtt.jar &>nohup.out &"
 }
 
+_end_test() {
+  ip=${1}
+  listened=${2}
+  mqttListened="mqtt://${ip}:${listened}"
+  port=22
+  # 修改 username 需慎重
+  username="admin"
+  password="0."
+  ssh -p ${port} ${username}@${ip} "\
+    pkill -f mqtt.server.listened=${mqttListened} && sleep 3s && \
+    ps -ef|grep mqtt.server.listened=${mqttListened}"
+
+}
+
 # gatewayIp serverIp cluster
 # 192.168.0.1 192.168.1.1 redis://10.255.1.43
 _init_start() {
@@ -242,6 +256,12 @@ start_test)
   shift
   _start_test $@
   echo "init_test done"
+  ;;
+end_test)
+  # ./broker.sh start redis://10.255.1.42:7000 mainArgs
+  shift
+  _end_test $@
+  echo "end_test done"
   ;;
 *)
   echo "Usage: ${0} init/start"
