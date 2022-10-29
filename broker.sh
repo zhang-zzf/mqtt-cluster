@@ -124,15 +124,16 @@ _start() {
 }
 
 # gatewayIp serverIp cluster
-# mqtt://192.168.0.1:1883 192.168.1.1 1883
+# mqtt://192.168.0.1:1883 192.168.1.1 1883 redis://10.255.1.41:7000
 _start_test() {
   cd ${workdir}
   toJoin=${1}
   ip=${2}
   listened=${3}
+  redisUrl=${4}
   mqttListened="mqtt://${ip}:${listened}"
-  heapSize="512M"
-  threadNum=4
+  heapSize="16g"
+  threadNum=16
   port=22
   # 修改 username 需慎重
   username="admin"
@@ -154,6 +155,9 @@ _start_test() {
   if [ "${toJoin}" != "mqtt" ]; then
     opt="${opt} -Dmqtt.server.cluster.join=${toJoin}"
   fi
+  if [ "${redisUrl}" != "" ]; then
+    opt="${opt} -Dmqtt.server.cluster.db.redis.url=${redisUrl}"
+  fi
   opt="${opt} -Dmqtt.server.cluster.node.channel.num=${threadNum}"
   # prometheus jvm exporter
   opt="${opt} -Dprometheus.export.address=${ip}:0"
@@ -166,7 +170,7 @@ _start_test() {
   ssh -p ${port} ${username}@${ip} "mkdir -p ${dir} &>/dev/null; \
    cd ${dir} && \
       nohup ~/broker_cluster/broker/jdk/default/bin/java ${opt} \
-      -jar ~/broker_cluster/broker/mqtt.jar &>nohup.out &"
+      -jar ~/broker_cluster/broker/mqtt.jar &>/dev/null &"
 }
 
 _end_test() {
