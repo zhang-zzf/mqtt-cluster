@@ -68,7 +68,7 @@ EOF
   ssh -n -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/consul 2>/dev/null;\
         pkill consul && sleep 8s; \
         cd ~/broker_cluster/consul && rm -rf data; \
-        nohup ../broker/consul agent -bind=${ip} -data-dir=./data -retry-join=${localIp} &>./nohup.out & \
+        nohup ../broker/consul agent -bind=${ip} -data-dir=./data -retry-join=${localIp} &>./nohup.out & ;sleep 1s\
         "
   # start node-exporter
   ssh -n -p ${port} ${username}@${ip} "mkdir -p ~/broker_cluster/node_exporter 2>/dev/null ; \

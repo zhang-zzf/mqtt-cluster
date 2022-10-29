@@ -124,16 +124,16 @@ _start() {
 }
 
 # gatewayIp serverIp cluster
-# 192.168.0.1 192.168.1.1 redis://10.255.1.43
+# 192.168.0.1 redis://10.255.1.43:7000 mqtt://192.168.0.11:1883 192.168.1.12
 _init_start() {
   cd ${workdir}
   gatewayIp=${1}
-  ip=${2}
-  redisUrl=${3}
-  toJoin=${4}
-  heapSize=64g
-  # 9G=4608,18G=9216,36G=[18432],72G=36864
-  hugePageSize=36864
+  redisUrl=${2}
+  toJoin=${3}
+  ip=${4}
+  heapSize=96g
+  # 9G=4608,18G=9216,36G=18432,72G=36864,98G=50176
+  hugePageSize=50176
   # for 32CPU
   threadNum=64
   port=22
@@ -165,7 +165,7 @@ _init_start() {
   opt="${opt} -Dspring.enable=true"
   opt="${opt} -Dmqtt.server.cluster.enable=true"
   opt="${opt} -Dmqtt.server.cluster.nodeName=${ip}"
-  if [ "${toJoin}" != "" ]; then
+  if [ "${toJoin}" != "mqtt" ]; then
     opt="${opt} -Dmqtt.server.cluster.join=${toJoin}"
   fi
   opt="${opt} -Dmqtt.server.cluster.node.channel.num=${threadNum}"
