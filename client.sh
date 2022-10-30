@@ -36,9 +36,9 @@ sshPort=22
 _init() {
   # 循环初始化一个 IP 段内的所有IP
   gatewayIp=${1}
-  subweb=${3}
-  startIp=1
-  endIp=254
+  subweb=${2}
+  startIp=${3:-1}
+  endIp=${4:-254}
   for ((i = startIp; i < endIp; i++)); do
     ip="${subweb}.${i}"
     ping ${ip} -c 1 -W 1 -n -4 -q &>/dev/null

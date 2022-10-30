@@ -158,7 +158,7 @@ _init_start() {
   opt="${opt} --add-opens java.base/java.nio=ALL-UNNAMED"
   # gc
   opt="${opt} -XX:+UseZGC \"-Xlog:safepoint,classhisto*=trace,age*,gc*=info:file=./gc-%p-%t.log:time,tid,tags:filecount=8,filesize=64m\""
-  opt="${opt} -XX:ZAllocationSpikeTolerance=5"
+  opt="${opt} -XX:ZAllocationSpikeTolerance=2"
   opt="${opt} -XX:+UseLargePages"
   opt="${opt} -Dmqtt.server.listened=mqtt://${ip}:1883"
   # start spring context
