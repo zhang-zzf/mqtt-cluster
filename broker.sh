@@ -124,13 +124,14 @@ _start() {
 }
 
 # gatewayIp serverIp cluster
-# 192.168.0.1 redis://10.255.1.43:7000 mqtt://192.168.0.11:1883 192.168.1.12
+# 192.168.0.1 redis://10.255.1.43:7000 mqtt://192.168.0.11:1883 192.168.1.12 restart
 _init_start() {
   cd ${workdir}
   gatewayIp=${1}
   redisUrl=${2}
   toJoin=${3}
   ip=${4}
+  restart=${5}
   heapSize=96g
   # 9G=4608,18G=9216,36G=18432,72G=36864,88=45056,98G=50176
   hugePageSize=50176
@@ -140,9 +141,13 @@ _init_start() {
   # 修改 username 需慎重
   username="root"
   password="Root0.0."
-  source ./cluster.sh source
-  _init_vm_func ${username} ${password} ${ip} ${port}
-  _init_env_func ${gatewayIp} ${username} ${password} ${ip} ${port}
+  # 判断 consul 进程是否存在
+  processCnt=$(ssh -p ${port} ${username}@${ip} "ps -ef|grep consul|wc -l")
+  if [ ${processCnt} -lt 3 ]; then
+    source ./cluster.sh source
+    _init_vm_func ${username} ${password} ${ip} ${port}
+    _init_env_func ${gatewayIp} ${username} ${password} ${ip} ${port}
+  fi
   # hugePage
   echo "enable Linux Huge Pages: ${hugePageSize}"
   echo "${password}" | ssh -tt -p ${port} ${username}@${ip} \
@@ -174,9 +179,24 @@ _init_start() {
   opt="${opt} -Dmqtt.server.cluster.db.redis.url=${redisUrl}"
   echo "jvm_opt-> ${opt}"
   # start the broker
-  ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
-      ulimit -n 10280000; nohup broker/jdk/default/bin/java ${opt} \
-      -jar broker/mqtt.jar &>/dev/null &"
+  if [ "${restart}" != "" ]; then
+    ssh -p ${port} ${username}@${ip} "echo ${password}|sudo -S pkill java && sleep 3s"
+  fi
+  while :; do
+    ssh -p ${port} ${username}@${ip} "cd ~/broker_cluster && \
+        ulimit -n 10280000; nohup broker/jdk/default/bin/java ${opt} \
+        -jar broker/mqtt.jar &>/dev/null &"
+    ssh -p ${port} ${username}@${ip} "sleep 3s"
+    processCnt=$(ssh -p ${port} ${username}@${ip} "ss -tnl|grep 1883|wc -l")
+    if [ ${processCnt} -lt 1 ]; then
+      echo "进程启动失败，kill java->restart it"
+      ssh -p ${port} ${username}@${ip} "pkill java && sleep 3s"
+    else
+      echo "Broker 进程启动成功"
+      ssh -p ${port} ${username}@${ip} "ss -tnl|grep 1883"
+      break
+    fi
+  done
 }
 
 case "$1" in
