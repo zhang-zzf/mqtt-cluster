@@ -131,9 +131,9 @@ _init_start() {
   redisUrl=${2}
   toJoin=${3}
   ip=${4}
-  heapSize=86g
+  heapSize=96g
   # 9G=4608,18G=9216,36G=18432,72G=36864,88=45056,98G=50176
-  hugePageSize=45056
+  hugePageSize=50176
   # for 32CPU
   threadNum=64
   port=22
