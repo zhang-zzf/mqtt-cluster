@@ -21,7 +21,7 @@ _startJvm() {
               -Dmqtt.client.mode=true \
               -Dprometheus.export.address=${ip}:0 \
               -Dmqtt.client.thread.num=8  -Dclient.startup.sleep=0"
-  programargs="${serverAddress} ${ip}:0 64000 32 0 0 4000"
+  programargs="${serverAddress} ${ip}:0 64000 32 0 0 32000"
   ssh -p ${sshPort} ${username}@${ip} "cd ~/broker_cluster && \
       ulimit -n 10280000; nohup broker/jdk/default/bin/java ${vmoptions} \
       -jar broker/mqtt.jar ${programargs} &>/dev/null &"

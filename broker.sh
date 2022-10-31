@@ -132,9 +132,9 @@ _init_start() {
   toJoin=${3}
   ip=${4}
   restart=${5}
-  heapSize=96g
+  heapSize=90g
   # 9G=4608,18G=9216,36G=18432,72G=36864,88=45056,98G=50176
-  hugePageSize=50176
+  hugePageSize=47104
   # for 32CPU
   threadNum=64
   port=22
